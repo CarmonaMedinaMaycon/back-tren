@@ -15,8 +15,8 @@ def lambda_handler(event, context):
         id = str(uuid.uuid4())  # Genera un nuevo ID
         modelo = data['modelo']
         fabricante = data['fabricante']
+        longuitud = data['longuitud']
         capacidad = data['capacidad']
-        rango = data['rango']
 
         # Inserta el ítem en la tabla de DynamoDB
         table.put_item(
@@ -24,8 +24,8 @@ def lambda_handler(event, context):
                 'id': id,  # Usa el ID generado
                 'modelo': modelo,
                 'fabricante': fabricante,
+                'longuitud': longuitud,
                 'capacidad': capacidad,
-                'rango': rango
             }
         )
 
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
             },
-            'body': json.dumps({'message': 'Avión creado con éxito'})
+            'body': json.dumps({'message': 'Tren creado con éxito'})
         }
 
     except ClientError as e:
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
             },
-            'body': json.dumps({'message': 'Error al crear el avión', 'error': str(e)})
+            'body': json.dumps({'message': 'Error al crear el Tren', 'error': str(e)})
         }
     except Exception as e:
         return {

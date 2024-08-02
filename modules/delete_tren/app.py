@@ -1,32 +1,30 @@
 import json
 import boto3
 from botocore.exceptions import ClientError
-from decimal import Decimal
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('planes-new')
-
-def decimal_default(obj):
-    if isinstance(obj, Decimal):
-        return float(obj)
-    raise TypeError("Tipo de dato no serializable")
+table = dynamodb.Table('tren-new')
 
 def lambda_handler(event, context):
     try:
-        id = event['pathParameters']['id']
-        response = table.get_item(Key={'id': id})
+        # Obtener el ID del avión desde la URL
+        tren_id = event['pathParameters'].get('id')
 
-        if 'Item' in response:
+        # Verificar si el ID está presente
+        if not tren_id:
             return {
-                'statusCode': 200,
+                'statusCode': 400,
                 'headers': {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
                 },
-                'body': json.dumps(response['Item'], default=decimal_default)
+                'body': json.dumps({'message': 'ID is required'})
             }
-        else:
+
+        # Comprobar si el tren existe
+        response = table.get_item(Key={'id': tren_id})
+        if 'Item' not in response:
             return {
                 'statusCode': 404,
                 'headers': {
@@ -34,17 +32,31 @@ def lambda_handler(event, context):
                     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
                 },
-                'body': json.dumps({'message': 'Avión no encontrado'})
+                'body': json.dumps({'message': 'Tren not found'})
             }
-    except ClientError as e:
+
+        # Eliminar el tren de la tabla
+        table.delete_item(Key={'id': tren_id})
+
         return {
-            'statusCode': 400,
+            'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
             },
-            'body': json.dumps({'error': str(e)})
+            'body': json.dumps({'message': 'Tren deleted successfully'})
+        }
+
+    except ClientError as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
+            },
+            'body': json.dumps({'message': str(e)})
         }
     except Exception as e:
         return {
@@ -54,5 +66,5 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
             },
-            'body': json.dumps({'error': 'Error interno del servidor', 'details': str(e)})
+            'body': json.dumps({'message': 'Internal server error'})
         }

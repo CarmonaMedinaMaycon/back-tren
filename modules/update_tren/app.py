@@ -3,7 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('planes-new')  # Nombre de tabla actualizado
+table = dynamodb.Table('tren-new')  # Nombre de tabla actualizado
 
 def lambda_handler(event, context):
     try:
@@ -14,13 +14,16 @@ def lambda_handler(event, context):
         id = data.get('id')
         modelo = data.get('modelo')
         fabricante = data.get('fabricante')
+        longuitud = data.get('longuitud')
         capacidad = data.get('capacidad')
-        rango = data.get('rango')
+
 
         if not id or not isinstance(id, str):
             raise ValueError('El campo "id" es requerido y debe ser una cadena.')
         if not modelo or not isinstance(modelo, str):
             raise ValueError('El campo "modelo" es requerido y debe ser una cadena.')
+        if not longuitud or not isinstance(longuitud, int) or longuitud <= 0:
+            raise ValueError('El campo "longuitud" es requerido y debe ser un entero positivo.')
         if not fabricante or not isinstance(fabricante, str):
             raise ValueError('El campo "fabricante" es requerido y debe ser una cadena.')
         if not capacidad or not isinstance(capacidad, int) or capacidad <= 0:
@@ -29,17 +32,17 @@ def lambda_handler(event, context):
         # Check if the item exists in DynamoDB
         response = table.get_item(Key={'id': id})
         if 'Item' not in response:
-            raise ValueError(f'El avión con id "{id}" no existe.')
+            raise ValueError(f'El tren con id "{id}" no existe.')
 
         # Update item in DynamoDB
         table.update_item(
             Key={'id': id},
-            UpdateExpression='SET modelo = :modelo, fabricante = :fabricante, capacidad = :capacidad, rango = :rango',
+            UpdateExpression='SET modelo = :modelo, fabricante = :fabricante, longuitud = :longuitud, capacidad = :capacidad',
             ExpressionAttributeValues={
                 ':modelo': modelo,
                 ':fabricante': fabricante,
                 ':capacidad': capacidad,
-                ':rango': rango
+                ':longuitud': longuitud
             }
         )
 
@@ -50,7 +53,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
             },
-            'body': json.dumps({'message': 'Avión actualizado exitosamente!'})
+            'body': json.dumps({'message': 'Tren actualizado con éxito'})
         }
 
     except ValueError as ve:
